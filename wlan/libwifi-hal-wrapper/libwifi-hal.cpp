@@ -27,6 +27,16 @@
 static wifi_hal_legacy_fn* fln = nullptr;
 static void* lib_handle = nullptr;
 
+#ifndef USE_PRE_BAKLAVA_QPR0_STRUCT
+template <typename WifiHalFn>
+static void copy_rtt_v4_if_supported(WifiHalFn* fn) {
+    if constexpr (requires { fn->wifi_rtt_range_request_v4; }) {
+        SET_IF_NOT_NULL(fn, fln, wifi_rtt_range_request_v4);
+        SET_IF_NOT_NULL(fn, fln, wifi_get_rtt_capabilities_v4);
+    }
+}
+#endif
+
 wifi_error init_wifi_vendor_hal_func_table(wifi_hal_fn* fn) {
     init_wifi_vendor_hal_func_table_legacy_t init_fn;
     wifi_error ret = WIFI_ERROR_NONE;
@@ -87,16 +97,13 @@ wifi_error init_wifi_vendor_hal_func_table(wifi_hal_fn* fn) {
 #ifndef USE_PRE_U_QPR2_STRUCT
     SET_IF_NOT_NULL(fn, fln, wifi_rtt_range_request_v3);
 #ifndef USE_PRE_BAKLAVA_QPR0_STRUCT
-    SET_IF_NOT_NULL(fn, fln, wifi_rtt_range_request_v4);
+    copy_rtt_v4_if_supported(fn);
 #endif
 #endif
     SET_IF_NOT_NULL(fn, fln, wifi_rtt_range_cancel);
     SET_IF_NOT_NULL(fn, fln, wifi_get_rtt_capabilities);
 #ifndef USE_PRE_U_QPR2_STRUCT
     SET_IF_NOT_NULL(fn, fln, wifi_get_rtt_capabilities_v3);
-#ifndef USE_PRE_BAKLAVA_QPR0_STRUCT
-    SET_IF_NOT_NULL(fn, fln, wifi_get_rtt_capabilities_v4);
-#endif
 #endif
     SET_IF_NOT_NULL(fn, fln, wifi_rtt_get_responder_info);
     SET_IF_NOT_NULL(fn, fln, wifi_enable_responder);
